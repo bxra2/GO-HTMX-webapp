@@ -1,0 +1,31 @@
+:root {
+  --background-color: #00112f;
+  --text-color: #d4d4e2;
+}
+
+body {
+  font-family: "Share Tech Mono", monospace;
+  font-weight: 400;
+  font-style: normal;
+  background-color: var(--background-color);
+}
+
+h1 {
+  color: var(--text-color);
+}
+
+.table {
+  background-color: transparent !important;
+}
+
+.table tbody tr,
+.table tbody td,
+.table tbody th {
+  background-color: transparent;
+  color: var(--text-color);
+}
+
+caption {
+  caption-side: top;
+  color: var(--text-color);
+}

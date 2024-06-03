@@ -75,12 +75,21 @@ func (s *server) addSubscriber(subscriber *subscriber) {
 	s.subscribers[subscriber] = struct{}{}
 	s.subscribersMutex.Unlock()
 	fmt.Println("added subscriber", subscriber)
+}
+
+func (s *server) broadcast(msg []byte) {
+	s.subscribersMutex.Lock()
+	for subscriber := range s.subscribers {
+		subscriber.msgs <- msg
+	}
+	s.subscribersMutex.Unlock()
 
 }
 
 func main() {
 	fmt.Println("Starting System Mointor...")
-	go func() {
+	srv := NewServer()
+	go func(s *server) {
 		for {
 			systemSection, err := hardware.GetSystemSection()
 			if err != nil {
@@ -97,18 +106,40 @@ func main() {
 				fmt.Println(err)
 			}
 
-			fmt.Println(systemSection)
+			timeStamp := time.Now().Format("2006-01-02 15:04:05")
 
-			fmt.Println(diskSection)
+			html := `
+			<div hx-swap-oob="innerHTML:#update-timestamp">
+			` + timeStamp + `
+			</div>
+			<h3>system</h3>
+			<br/>
+			<div hx-swap-oob="innerHTML:#system-data">
+			` + systemSection + `
+			</div>
+			<h3>disk</h3>
+			<br/>
 
-			fmt.Println(cpuSection)
+			<div hx-swap-oob="innerHTML:#disk-data">
+			` + diskSection + `
+			</div>
+			<h3>cpu</h3>
+			<br/>
+
+			<div hx-swap-oob="innerHTML:#cpu-data">
+			` + cpuSection + `
+			</div>
+
+			`
+
+			s.broadcast([]byte(html))
 
 			time.Sleep(3 * time.Second)
 
 		}
-	}()
+	}(srv)
 
-	err := http.ListenAndServe(":8080", &NewServer().mux)
+	err := http.ListenAndServe(":8080", &srv.mux)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
